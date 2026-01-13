@@ -1,0 +1,817 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Thinkific Integrations Conversation Helper</title>
+    <meta name="description" content="Guided integration discovery flow for Thinkific sales role play." />
+    <style>
+      :root {
+        --bg: #f3f0ea;
+        --card: #ffffff;
+        --ink: #1d1a16;
+        --muted: #6b665f;
+        --accent: #c86b3c;
+        --accent-dark: #a5532c;
+        --chip: #efe6db;
+        --shadow: 0 12px 40px rgba(27, 20, 10, 0.12);
+        --radius: 20px;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        font-family: "Space Grotesk", "Segoe UI", sans-serif;
+        color: var(--ink);
+        background: radial-gradient(circle at 20% 10%, #f6e9dc 0%, var(--bg) 45%, #efeae0 100%);
+        min-height: 100vh;
+      }
+
+      .page {
+        max-width: 1100px;
+        margin: 0 auto;
+        padding: 48px 20px 56px;
+      }
+
+      header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 24px;
+      }
+
+      .header-actions {
+        display: flex;
+        gap: 10px;
+      }
+
+      .brand {
+        font-size: 18px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--muted);
+      }
+
+      .restart {
+        background: none;
+        border: none;
+        color: var(--accent-dark);
+        font-weight: 600;
+        cursor: pointer;
+        padding: 8px 10px;
+        border-radius: 999px;
+        transition: background 0.2s ease;
+      }
+
+      .restart[disabled] {
+        cursor: not-allowed;
+        opacity: 0.45;
+      }
+
+      .restart:hover,
+      .restart:focus-visible {
+        background: #f7e1d3;
+        outline: none;
+      }
+
+      .layout {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 320px;
+        gap: 24px;
+      }
+
+      .card {
+        background: var(--card);
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
+        padding: 28px 28px 32px;
+        display: flex;
+        flex-direction: column;
+        gap: 18px;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .card::after {
+        content: "";
+        position: absolute;
+        inset: auto -40% -60% -40%;
+        height: 180px;
+        background: radial-gradient(circle at 50% 0%, rgba(200, 107, 60, 0.12), transparent 70%);
+      }
+
+      .progress {
+        font-size: 13px;
+        text-transform: uppercase;
+        letter-spacing: 0.12em;
+        color: var(--muted);
+      }
+
+      .chips {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+
+      .chip {
+        background: var(--chip);
+        padding: 6px 12px;
+        border-radius: 999px;
+        font-size: 13px;
+        color: var(--muted);
+      }
+
+      h1 {
+        font-size: 26px;
+        margin: 0;
+      }
+
+      .prompt {
+        font-size: 18px;
+        margin: 0;
+        line-height: 1.5;
+      }
+
+      .info {
+        margin: 0;
+        padding-left: 18px;
+        color: var(--muted);
+      }
+
+      .info li {
+        margin-bottom: 6px;
+      }
+
+      .options {
+        display: grid;
+        gap: 12px;
+      }
+
+      .option-btn {
+        text-align: left;
+        border: 1px solid #e4d8cc;
+        border-radius: 14px;
+        padding: 14px 16px;
+        background: #fffaf5;
+        cursor: pointer;
+        font-size: 16px;
+        font-weight: 600;
+        color: var(--ink);
+        transition: transform 0.15s ease, border 0.15s ease, box-shadow 0.15s ease;
+      }
+
+      .option-btn:hover,
+      .option-btn:focus-visible {
+        transform: translateY(-1px);
+        border-color: var(--accent);
+        box-shadow: 0 8px 18px rgba(200, 107, 60, 0.18);
+        outline: none;
+      }
+
+      .recommendation {
+        background: #fff1e7;
+        border-radius: 16px;
+        padding: 16px;
+        border: 1px solid #f1c5ae;
+      }
+
+      .recommendation h3 {
+        margin: 0 0 6px;
+        font-size: 18px;
+      }
+
+      .rec-points {
+        margin: 10px 0 0;
+        padding-left: 18px;
+        color: var(--muted);
+      }
+
+      .rec-points li {
+        margin-bottom: 6px;
+      }
+
+      .tag {
+        display: inline-block;
+        margin-top: 8px;
+        padding: 4px 10px;
+        border-radius: 999px;
+        background: var(--accent);
+        color: white;
+        font-size: 12px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      .panel {
+        background: var(--card);
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
+        padding: 22px 20px;
+        display: none;
+        flex-direction: column;
+        gap: 14px;
+        height: fit-content;
+      }
+
+      .panel.visible {
+        display: flex;
+      }
+
+      .panel h2 {
+        font-size: 16px;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--muted);
+        margin: 0;
+      }
+
+      .talking-points {
+        margin: 0;
+        padding-left: 18px;
+      }
+
+      .talking-points li {
+        margin-bottom: 8px;
+      }
+
+      footer {
+        margin-top: 28px;
+        display: flex;
+        gap: 16px;
+        color: var(--muted);
+        font-size: 14px;
+      }
+
+      footer a {
+        color: var(--muted);
+        text-decoration: none;
+      }
+
+      footer a:hover {
+        color: var(--accent-dark);
+      }
+
+      @media (max-width: 900px) {
+        .layout {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="page">
+      <header>
+        <div class="brand">Thinkific Integrations Conversation Helper</div>
+        <div class="header-actions">
+          <button class="restart" type="button" id="backBtn">Back</button>
+          <button class="restart" type="button" id="restartBtn">Start over</button>
+        </div>
+      </header>
+
+      <main class="layout">
+        <section class="card" aria-live="polite" aria-atomic="true" id="mainCard">
+          <div class="progress" id="progressLabel">Question 1</div>
+          <div class="chips" id="breadcrumbs"></div>
+          <h1 id="title"></h1>
+          <p class="prompt" id="prompt"></p>
+          <ul class="info" id="infoList"></ul>
+          <div class="recommendation" id="recommendation" hidden>
+            <h3 id="recHeadline"></h3>
+            <p id="recSummary"></p>
+            <ul class="rec-points" id="recPoints"></ul>
+            <div class="tag" id="recTag"></div>
+          </div>
+          <div class="options" id="options"></div>
+        </section>
+
+        <aside class="panel" id="talkingPanel">
+          <h2>Talking points saved</h2>
+          <ul class="talking-points" id="talkingPoints"></ul>
+        </aside>
+      </main>
+
+      <footer>
+        <a href="https://apps.thinkific.com/" target="_blank" rel="noopener">Thinkific App Store</a>
+      </footer>
+    </div>
+
+    <script>
+      const FLOW = {
+        start: {
+          id: "start",
+          title: "Integration discovery",
+          prompt: "Have you checked the Thinkific App Store or Guru for this integration?",
+          info: [
+            "Goal: identify the exact tool and confirm data flow requirements.",
+            "Start with App Store and Guru to confirm if an existing integration is supported."
+          ],
+          options: [
+            {
+              id: "found",
+              label: "Yes, I found it in the App Store or Guru",
+              next: "found_in_store",
+              notes: ["App Store/Guru check: found listing"]
+            },
+            {
+              id: "not_listed",
+              label: "Yes, I checked and did not see it",
+              next: "tool_category",
+              notes: ["App Store/Guru check: not listed"]
+            },
+            {
+              id: "not_checked",
+              label: "Not yet - I need to check",
+              next: "resource_check",
+              notes: ["App Store/Guru check: pending"]
+            }
+          ]
+        },
+        resource_check: {
+          id: "resource_check",
+          title: "Quick check",
+          prompt: "Please check App Store and Guru, then continue.",
+          info: [
+            "Confirm whether an integration exists and any plan requirements.",
+            "If you find it, validate the data flow before confirming."
+          ],
+          options: [
+            {
+              id: "found",
+              label: "Found it in App Store or Guru",
+              next: "found_in_store",
+              notes: ["App Store/Guru check: found listing"]
+            },
+            {
+              id: "not_found",
+              label: "Not listed",
+              next: "tool_category",
+              notes: ["App Store/Guru check: not listed"]
+            }
+          ]
+        },
+        tool_category: {
+          id: "tool_category",
+          title: "Tool category",
+          prompt: "What type of tool is it?",
+          info: [
+            "This helps determine whether an existing integration is likely.",
+            "Capture the exact tool name and plan tier."
+          ],
+          options: [
+            {
+              id: "crm",
+              label: "CRM or sales tools",
+              next: "current_integrations",
+              notes: ["Tool category: CRM or sales"]
+            },
+            {
+              id: "marketing",
+              label: "Marketing automation or email",
+              next: "current_integrations",
+              notes: ["Tool category: marketing automation"]
+            },
+            {
+              id: "analytics",
+              label: "Analytics or BI",
+              next: "current_integrations",
+              notes: ["Tool category: analytics or BI"]
+            },
+            {
+              id: "identity",
+              label: "SSO or identity provider",
+              next: "current_integrations",
+              notes: ["Tool category: identity/SSO"]
+            },
+            {
+              id: "other",
+              label: "Other business system",
+              next: "current_integrations",
+              notes: ["Tool category: other system"]
+            }
+          ]
+        },
+        found_in_store: {
+          id: "found_in_store",
+          title: "Integration found",
+          prompt: "Great - before we confirm, let’s capture the context.",
+          info: [
+            "Confirm the integration supports the desired data flow.",
+            "Validate any requirements like plan level or API access."
+          ],
+          options: [
+            {
+              id: "context",
+              label: "Capture current integrations and data flow",
+              next: "current_integrations",
+              notes: ["Found integration: capture context before sharing docs"]
+            },
+            { id: "docs", label: "Share docs and confirm it works", next: "confirm_use_case" }
+          ]
+        },
+        current_integrations: {
+          id: "current_integrations",
+          title: "Current integrations",
+          prompt: "What integrations do you run today?",
+          info: [
+            "Understand their stack to anticipate overlap or data conflicts.",
+            "Capture the specific tools and owners."
+          ],
+          options: [
+            {
+              id: "crm",
+              label: "CRM or sales systems",
+              next: "past_setup",
+              notes: ["Current integrations: CRM or sales stack"]
+            },
+            {
+              id: "marketing",
+              label: "Marketing automation",
+              next: "past_setup",
+              notes: ["Current integrations: marketing automation"]
+            },
+            {
+              id: "analytics",
+              label: "Analytics or BI tools",
+              next: "past_setup",
+              notes: ["Current integrations: analytics or BI"]
+            },
+            {
+              id: "identity",
+              label: "Identity or SSO",
+              next: "past_setup",
+              notes: ["Current integrations: identity or SSO"]
+            },
+            {
+              id: "none",
+              label: "No integrations today",
+              next: "past_setup",
+              notes: ["Current integrations: none"]
+            }
+          ]
+        },
+        past_setup: {
+          id: "past_setup",
+          title: "Past setup",
+          prompt: "How have integrations been set up in the past?",
+          info: [
+            "This helps determine implementation effort and ownership.",
+            "Note if they use middleware, custom APIs, or manual exports."
+          ],
+          options: [
+            {
+              id: "native",
+              label: "Native integrations",
+              next: "data_flow",
+              notes: ["Past setup: native integrations"]
+            },
+            {
+              id: "middleware",
+              label: "Zapier or middleware",
+              next: "data_flow",
+              notes: ["Past setup: Zapier or middleware"]
+            },
+            {
+              id: "custom",
+              label: "Custom API work",
+              next: "data_flow",
+              notes: ["Past setup: custom API work"]
+            },
+            {
+              id: "manual",
+              label: "Manual exports",
+              next: "data_flow",
+              notes: ["Past setup: manual exports"]
+            },
+            {
+              id: "unsure",
+              label: "Not sure",
+              next: "data_flow",
+              notes: ["Past setup: unknown"]
+            }
+          ]
+        },
+        data_flow: {
+          id: "data_flow",
+          title: "Data flow",
+          prompt: "What data needs to move, and in which direction?",
+          info: [
+            "Capture direction: Thinkific -> tool, tool -> Thinkific, or bi-directional.",
+            "Clarify triggers: enrollments, course progress, completions, orders, users."
+          ],
+          options: [
+            {
+              id: "out",
+              label: "Thinkific -> other tool",
+              next: "outcomes",
+              notes: ["Data flow: Thinkific -> other tool"]
+            },
+            {
+              id: "in",
+              label: "Other tool -> Thinkific",
+              next: "outcomes",
+              notes: ["Data flow: other tool -> Thinkific"]
+            },
+            {
+              id: "both",
+              label: "Bi-directional",
+              next: "outcomes",
+              notes: ["Data flow: bi-directional"]
+            }
+          ]
+        },
+        outcomes: {
+          id: "outcomes",
+          title: "Desired outcomes",
+          prompt: "What outcome are you trying to achieve?",
+          info: [
+            "Define success: automation, reporting, segmentation, or access control.",
+            "If outcomes are unclear, bring an SE into the next call."
+          ],
+          options: [
+            {
+              id: "automation",
+              label: "Automate workflows",
+              next: "complexity",
+              notes: ["Outcome: workflow automation"]
+            },
+            {
+              id: "reporting",
+              label: "Centralize reporting",
+              next: "complexity",
+              notes: ["Outcome: centralized reporting"]
+            },
+            {
+              id: "segmentation",
+              label: "Segment learners or audiences",
+              next: "complexity",
+              notes: ["Outcome: segmentation"]
+            },
+            {
+              id: "access",
+              label: "Control access or provisioning",
+              next: "complexity",
+              notes: ["Outcome: access control or provisioning"]
+            }
+          ]
+        },
+        complexity: {
+          id: "complexity",
+          title: "Integration complexity",
+          prompt: "How complex does the integration need to be?",
+          info: [
+            "Simple one-way syncs may work with existing integrations.",
+            "Complex workflows often require SE validation."
+          ],
+          options: [
+            {
+              id: "simple",
+              label: "Simple, one-way sync",
+              next: "recommend_docs",
+              notes: ["Complexity: simple one-way sync"]
+            },
+            {
+              id: "moderate",
+              label: "Multiple events or custom fields",
+              next: "se_request",
+              notes: ["Complexity: multiple events or custom fields"]
+            },
+            {
+              id: "complex",
+              label: "Multiple systems or custom logic",
+              next: "se_request",
+              notes: ["Complexity: multiple systems or custom logic"]
+            }
+          ]
+        },
+        confirm_use_case: {
+          id: "confirm_use_case",
+          title: "Confirm the use case",
+          prompt: "Does the integration cover your specific workflow?",
+          info: [
+            "If yes, share the integration docs and confirm setup steps.",
+            "If unsure, book a follow-up with an SE."
+          ],
+          options: [
+            { id: "yes", label: "Yes, it matches", next: "recommend_docs" },
+            { id: "maybe", label: "Not sure yet", next: "se_request" }
+          ]
+        },
+        recommend_docs: {
+          id: "recommend_docs",
+          title: "Recommendation: Share integration docs",
+          info: [
+            "Confirm the app listing covers the required data flow.",
+            "Send setup docs and confirm any plan requirements."
+          ],
+          endRecommendation: {
+            headline: "Recommendation: Share docs and confirm setup",
+            summary: "Use the App Store listing to confirm capabilities, then send the setup guide and validate outcomes.",
+            tag: "Docs"
+          },
+          options: [
+            { id: "app_store", label: "Open Thinkific App Store", href: "https://apps.thinkific.com/" },
+            { id: "restart", label: "Start Over", next: "start" }
+          ]
+        },
+        se_request: {
+          id: "se_request",
+          title: "Request SE validation",
+          info: [
+            "Capture the tool name, data flow, triggers, and desired outcomes.",
+            "Book a follow-up with the SE to confirm feasibility."
+          ],
+          autoNotes: [
+            "SE notes checklist: tool name + plan tier",
+            "SE notes checklist: current integrations + owners",
+            "SE notes checklist: past setup method",
+            "SE notes checklist: data flow direction + triggers",
+            "SE notes checklist: desired outcomes + success metric",
+            "SE notes checklist: timeline and urgency"
+          ],
+          endRecommendation: {
+            headline: "Recommendation: Submit SE request",
+            summary: "Document the integration use case and schedule a follow-up with Solutions Engineering.",
+            tag: "SE Review"
+          },
+          options: [{ id: "restart2", label: "Start Over", next: "start" }]
+        }
+      };
+
+      const state = {
+        currentId: "start",
+        breadcrumbs: [],
+        talkingPoints: new Set(),
+        talkingTimeline: [],
+        history: []
+      };
+
+      const elements = {
+        progressLabel: document.getElementById("progressLabel"),
+        breadcrumbs: document.getElementById("breadcrumbs"),
+        title: document.getElementById("title"),
+        prompt: document.getElementById("prompt"),
+        infoList: document.getElementById("infoList"),
+        options: document.getElementById("options"),
+        recommendation: document.getElementById("recommendation"),
+        recHeadline: document.getElementById("recHeadline"),
+        recSummary: document.getElementById("recSummary"),
+        recPoints: document.getElementById("recPoints"),
+        recTag: document.getElementById("recTag"),
+        talkingPanel: document.getElementById("talkingPanel"),
+        talkingPoints: document.getElementById("talkingPoints"),
+        restartBtn: document.getElementById("restartBtn"),
+        backBtn: document.getElementById("backBtn")
+      };
+
+      function renderNode() {
+        const node = FLOW[state.currentId];
+        if (!node) {
+          return;
+        }
+
+        elements.title.textContent = node.title || "";
+        elements.prompt.textContent = node.prompt || "";
+
+        elements.progressLabel.textContent = node.endRecommendation
+          ? "Recommendation"
+          : `Question ${Math.max(1, state.breadcrumbs.length + 1)}`;
+
+        elements.breadcrumbs.innerHTML = "";
+        state.breadcrumbs.forEach((label) => {
+          const chip = document.createElement("span");
+          chip.className = "chip";
+          chip.textContent = label;
+          elements.breadcrumbs.appendChild(chip);
+        });
+
+        elements.infoList.innerHTML = "";
+        if (node.info && node.info.length) {
+          node.info.forEach((item) => {
+            const li = document.createElement("li");
+            li.textContent = item;
+            elements.infoList.appendChild(li);
+          });
+          elements.infoList.hidden = false;
+        } else {
+          elements.infoList.hidden = true;
+        }
+
+        if (node.endRecommendation) {
+          elements.recommendation.hidden = false;
+          elements.recHeadline.textContent = node.endRecommendation.headline;
+          elements.recSummary.textContent = node.endRecommendation.summary;
+          elements.recTag.textContent = node.endRecommendation.tag;
+          elements.recPoints.innerHTML = "";
+          elements.recPoints.hidden = true;
+        } else {
+          elements.recommendation.hidden = true;
+        }
+
+        elements.backBtn.disabled = state.history.length === 0;
+
+        elements.options.innerHTML = "";
+        (node.options || []).forEach((option) => {
+          const button = document.createElement("button");
+          button.type = "button";
+          button.className = "option-btn";
+          button.textContent = option.label;
+          button.addEventListener("click", () => handleOptionSelection(node, option));
+          elements.options.appendChild(button);
+        });
+      }
+
+      function handleOptionSelection(node, option) {
+        if (option.href) {
+          window.open(option.href, "_blank", "noopener");
+          return;
+        }
+
+        if (option.next === "start") {
+          reset();
+          return;
+        }
+
+        state.history.push(snapshotState());
+        state.breadcrumbs.push(option.label);
+        const nextNode = option.next ? FLOW[option.next] : null;
+        addTalkingPoints(node.info, option.notes, nextNode ? nextNode.autoNotes : []);
+
+        if (option.next) {
+          state.currentId = option.next;
+          renderNode();
+        }
+      }
+
+      function snapshotState() {
+        return {
+          currentId: state.currentId,
+          breadcrumbs: [...state.breadcrumbs],
+          talkingPoints: new Set(state.talkingPoints),
+          talkingTimeline: [...state.talkingTimeline]
+        };
+      }
+
+      function restoreState(snapshot) {
+        state.currentId = snapshot.currentId;
+        state.breadcrumbs = [...snapshot.breadcrumbs];
+        state.talkingPoints = new Set(snapshot.talkingPoints);
+        state.talkingTimeline = [...snapshot.talkingTimeline];
+        renderTalkingPoints();
+        renderNode();
+      }
+
+      function goBack() {
+        const previous = state.history.pop();
+        if (!previous) {
+          return;
+        }
+        restoreState(previous);
+      }
+
+      function addTalkingPoints(...groups) {
+        const additions = groups.flat().filter(Boolean);
+        additions.forEach((point) => {
+          if (!state.talkingPoints.has(point)) {
+            state.talkingPoints.add(point);
+            state.talkingTimeline.push(point);
+          }
+        });
+        renderTalkingPoints();
+      }
+
+      function renderTalkingPoints() {
+        elements.talkingPoints.innerHTML = "";
+        state.talkingTimeline.forEach((point) => {
+          const li = document.createElement("li");
+          li.textContent = point;
+          elements.talkingPoints.appendChild(li);
+        });
+        elements.talkingPanel.classList.toggle("visible", state.talkingTimeline.length > 0);
+      }
+
+      function reset() {
+        state.currentId = "start";
+        state.breadcrumbs = [];
+        state.talkingPoints.clear();
+        state.talkingTimeline = [];
+        state.history = [];
+        renderTalkingPoints();
+        renderNode();
+      }
+
+      document.addEventListener("keydown", (event) => {
+        if (event.key.toLowerCase() === "r") {
+          reset();
+        }
+      });
+
+      elements.restartBtn.addEventListener("click", reset);
+      elements.backBtn.addEventListener("click", goBack);
+
+      renderNode();
+    </script>
+  </body>
+</html>

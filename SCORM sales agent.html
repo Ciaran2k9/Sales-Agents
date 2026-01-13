@@ -1,0 +1,808 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Thinkific SCORM Conversation Helper</title>
+    <meta name="description" content="Guided SCORM discovery flow with one step per page." />
+    <style>
+      :root {
+        --bg: #f3f0ea;
+        --card: #ffffff;
+        --ink: #1d1a16;
+        --muted: #6b665f;
+        --accent: #c86b3c;
+        --accent-dark: #a5532c;
+        --chip: #efe6db;
+        --shadow: 0 12px 40px rgba(27, 20, 10, 0.12);
+        --radius: 20px;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        font-family: "Space Grotesk", "Segoe UI", sans-serif;
+        color: var(--ink);
+        background: radial-gradient(circle at 20% 10%, #f6e9dc 0%, var(--bg) 45%, #efeae0 100%);
+        min-height: 100vh;
+      }
+
+      .page {
+        max-width: 1100px;
+        margin: 0 auto;
+        padding: 48px 20px 56px;
+      }
+
+      header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 24px;
+      }
+
+      .header-actions {
+        display: flex;
+        gap: 10px;
+      }
+
+      .brand {
+        font-size: 18px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--muted);
+      }
+
+      .restart {
+        background: none;
+        border: none;
+        color: var(--accent-dark);
+        font-weight: 600;
+        cursor: pointer;
+        padding: 8px 10px;
+        border-radius: 999px;
+        transition: background 0.2s ease;
+      }
+
+      .restart[disabled] {
+        cursor: not-allowed;
+        opacity: 0.45;
+      }
+
+      .restart:hover,
+      .restart:focus-visible {
+        background: #f7e1d3;
+        outline: none;
+      }
+
+      .layout {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 320px;
+        gap: 24px;
+      }
+
+      .card {
+        background: var(--card);
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
+        padding: 28px 28px 32px;
+        display: flex;
+        flex-direction: column;
+        gap: 18px;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .card::after {
+        content: "";
+        position: absolute;
+        inset: auto -40% -60% -40%;
+        height: 180px;
+        background: radial-gradient(circle at 50% 0%, rgba(200, 107, 60, 0.12), transparent 70%);
+      }
+
+      .progress {
+        font-size: 13px;
+        text-transform: uppercase;
+        letter-spacing: 0.12em;
+        color: var(--muted);
+      }
+
+      .chips {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+
+      .chip {
+        background: var(--chip);
+        padding: 6px 12px;
+        border-radius: 999px;
+        font-size: 13px;
+        color: var(--muted);
+      }
+
+      h1 {
+        font-size: 26px;
+        margin: 0;
+      }
+
+      .prompt {
+        font-size: 18px;
+        margin: 0;
+        line-height: 1.5;
+      }
+
+      .info {
+        margin: 0;
+        padding-left: 18px;
+        color: var(--muted);
+      }
+
+      .info li {
+        margin-bottom: 6px;
+      }
+
+      .options {
+        display: grid;
+        gap: 12px;
+      }
+
+      .option-btn {
+        text-align: left;
+        border: 1px solid #e4d8cc;
+        border-radius: 14px;
+        padding: 14px 16px;
+        background: #fffaf5;
+        cursor: pointer;
+        font-size: 16px;
+        font-weight: 600;
+        color: var(--ink);
+        transition: transform 0.15s ease, border 0.15s ease, box-shadow 0.15s ease;
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+      }
+
+      .option-btn:hover,
+      .option-btn:focus-visible {
+        transform: translateY(-1px);
+        border-color: var(--accent);
+        box-shadow: 0 8px 18px rgba(200, 107, 60, 0.18);
+        outline: none;
+      }
+
+      .option-note {
+        font-size: 13px;
+        font-weight: 500;
+        color: var(--muted);
+      }
+
+      .recommendation {
+        background: #fff1e7;
+        border-radius: 16px;
+        padding: 16px;
+        border: 1px solid #f1c5ae;
+      }
+
+      .recommendation h3 {
+        margin: 0 0 6px;
+        font-size: 18px;
+      }
+
+      .rec-points {
+        margin: 10px 0 0;
+        padding-left: 18px;
+        color: var(--muted);
+      }
+
+      .rec-points li {
+        margin-bottom: 6px;
+      }
+
+      .tag {
+        display: inline-block;
+        margin-top: 8px;
+        padding: 4px 10px;
+        border-radius: 999px;
+        background: var(--accent);
+        color: white;
+        font-size: 12px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      .panel {
+        background: var(--card);
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
+        padding: 22px 20px;
+        display: none;
+        flex-direction: column;
+        gap: 14px;
+        height: fit-content;
+      }
+
+      .panel.visible {
+        display: flex;
+      }
+
+      .panel h2 {
+        font-size: 16px;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--muted);
+        margin: 0;
+      }
+
+      .talking-points {
+        margin: 0;
+        padding-left: 18px;
+      }
+
+      .talking-points li {
+        margin-bottom: 8px;
+      }
+
+      footer {
+        margin-top: 28px;
+        display: flex;
+        gap: 16px;
+        color: var(--muted);
+        font-size: 14px;
+      }
+
+      footer a {
+        color: var(--muted);
+        text-decoration: none;
+      }
+
+      footer a:hover {
+        color: var(--accent-dark);
+      }
+
+      @media (max-width: 900px) {
+        .layout {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="page">
+      <header>
+        <div class="brand">Thinkific SCORM Conversation Helper</div>
+        <div class="header-actions">
+          <button class="restart" type="button" id="backBtn">Back</button>
+          <button class="restart" type="button" id="resetBtn">Start over</button>
+        </div>
+      </header>
+
+      <main class="layout">
+        <section class="card" aria-live="polite" aria-atomic="true">
+          <div class="progress" id="stepLabel">Question 1</div>
+          <div class="chips" id="crumbs" aria-label="Answers so far"></div>
+          <h1 id="nodeTitle"></h1>
+          <p id="nodePrompt" class="prompt"></p>
+          <ul id="nodeInfo" class="info"></ul>
+          <div id="recommendation" class="recommendation" hidden>
+            <h3 id="recHeadline"></h3>
+            <p id="recSummary"></p>
+            <ul id="recPoints" class="rec-points"></ul>
+            <div id="recTag" class="tag"></div>
+          </div>
+          <div id="options" class="options" role="list"></div>
+        </section>
+
+        <aside id="talkingSection" class="panel">
+          <h2>Talking points saved</h2>
+          <ul id="talkingPoints" class="talking-points"></ul>
+        </aside>
+      </main>
+
+      <footer>
+        <a
+          href="https://support.thinkific.com/hc/en-us/articles/24607412212119-Create-SCORM-Compliant-Courses"
+          target="_blank"
+          rel="noopener"
+          >SCORM help article -></a
+        >
+        <a href="https://www.thinkific.com/" target="_blank" rel="noopener">thinkific.com</a>
+      </footer>
+    </div>
+
+    <script>
+      const FLOW = {
+        start: {
+          id: "start",
+          title: "SCORM Discovery",
+          prompt: "Do you currently use SCORM content?",
+          options: [
+            { id: "yes", label: "Yes", next: "yes_use_scorm_intro" },
+            { id: "no", label: "No", next: "no_use_scorm_intro" }
+          ],
+          info: [
+            "Goal: guide the conversation, qualify needs, and recommend the simplest path.",
+            "SCORM is a Plus feature and uses external authoring tools for interactive content.",
+            "Use this to uncover migration plans, reporting needs, and learner experience goals."
+          ]
+        },
+        yes_use_scorm_intro: {
+          id: "yes_use_scorm_intro",
+          title: "Great - you can import SCORM into Thinkific",
+          prompt: "What would you like to cover first?",
+          options: [
+            { id: "tech", label: "Technical vetting checklist", next: "tech_vetting" },
+            { id: "authoring", label: "Authoring tools + engagement goals", next: "authoring_tools" },
+            { id: "reporting", label: "Reporting and accountability", next: "reporting_needs" },
+            { id: "migration", label: "Migration scope and volume", next: "migration_scope" }
+          ],
+          info: [
+            "SCORM enables interactive content built in tools like Storyline or Rise 360.",
+            "Content is imported as a complete course, not as a single lesson.",
+            "Reporting is completion-focused, with additional analytics available in Thinkific."
+          ]
+        },
+        tech_vetting: {
+          id: "tech_vetting",
+          title: "Technical vetting checklist",
+          prompt: "Do any of these requirements raise concerns?",
+          options: [
+            { id: "no_concerns", label: "No concerns - proceed", next: "yes_plan_to_continue" },
+            { id: "mobile", label: "We need mobile access", next: "mobile_workaround" },
+            { id: "lesson", label: "We need SCORM as a lesson", next: "lesson_workaround" },
+            { id: "granular", label: "We need granular progress reporting", next: "reporting_limits" }
+          ],
+          info: [
+            "Supported versions: SCORM 2004 (4th edition) and SCORM 1.2.",
+            "Maximum file size is 1024 MB per package.",
+            "SCORM can only be uploaded as a complete course (not a lesson).",
+            "SCORM cannot be edited in Thinkific; changes happen in the authoring tool.",
+            "Progress reporting is limited to 0%, 1%, or 100% for completion.",
+            "SCORM is desktop-only and not supported in the Thinkific mobile app."
+          ]
+        },
+        mobile_workaround: {
+          id: "mobile_workaround",
+          title: "Mobile access expectations",
+          prompt: "Would a blended approach work?",
+          options: [
+            { id: "blend_yes", label: "Yes, blend SCORM with native content", next: "yes_plan_to_continue" },
+            { id: "blend_no", label: "No, mobile is required", next: "recommend_native_first" }
+          ],
+          info: [
+            "SCORM courses are desktop-only.",
+            "Use native Thinkific lessons for mobile access and pair with SCORM in a learning path."
+          ]
+        },
+        lesson_workaround: {
+          id: "lesson_workaround",
+          title: "SCORM must be a full course",
+          prompt: "How should we package the experience?",
+          options: [
+            { id: "bundle", label: "Bundle SCORM with native courses", next: "yes_plan_to_continue" },
+            { id: "path", label: "Use a learning path to guide consumption", next: "yes_plan_to_continue" }
+          ],
+          info: [
+            "Thinkific only supports SCORM as a full course.",
+            "Bundles and learning paths can group SCORM and native courses together."
+          ]
+        },
+        reporting_limits: {
+          id: "reporting_limits",
+          title: "Reporting expectations",
+          prompt: "Which outcomes matter most?",
+          options: [
+            { id: "completion", label: "Completion and compliance proof", next: "yes_plan_to_continue" },
+            { id: "score", label: "Scores and pass/fail", next: "yes_plan_to_continue" },
+            { id: "duration", label: "Time spent", next: "yes_plan_to_continue" },
+            { id: "granular", label: "Question-level analytics", next: "recommend_native_first" }
+          ],
+          info: [
+            "SCORM progress reporting is 0%, 1%, or 100% for completion.",
+            "Thinkific surfaces completion, score, duration, and pass/fail metrics.",
+            "Advanced Analytics can provide more reporting options if needed."
+          ]
+        },
+        authoring_tools: {
+          id: "authoring_tools",
+          title: "Authoring tools",
+          prompt: "Which tool do you use today?",
+          options: [
+            { id: "rise", label: "Rise 360", next: "authoring_notes" },
+            { id: "storyline", label: "Storyline", next: "authoring_notes" },
+            { id: "captivate", label: "Adobe Captivate", next: "authoring_notes" },
+            { id: "other", label: "Other or not sure", next: "authoring_notes" }
+          ],
+          info: [
+            "SCORM supports interactive content like branching, simulations, and quizzes.",
+            "Authoring tools typically require technical and design skills."
+          ]
+        },
+        authoring_notes: {
+          id: "authoring_notes",
+          title: "Interactive learning goals",
+          prompt: "How important is interactive learning in your program?",
+          options: [
+            { id: "critical", label: "Critical for outcomes", next: "yes_plan_to_continue" },
+            { id: "nice", label: "Nice to have", next: "yes_plan_to_continue" },
+            { id: "exploring", label: "Just exploring", next: "recommend_native_first" }
+          ],
+          info: [
+            "SCORM is ideal when interactive scenarios or simulations are required.",
+            "Native Thinkific lessons work well for most modern training needs."
+          ]
+        },
+        migration_scope: {
+          id: "migration_scope",
+          title: "Migration scope",
+          prompt: "How much SCORM content do you have?",
+          options: [
+            { id: "small", label: "1-5 modules", next: "migration_timeline" },
+            { id: "medium", label: "6-25 modules", next: "migration_timeline" },
+            { id: "large", label: "25+ modules", next: "migration_timeline" }
+          ],
+          info: [
+            "SCORM interoperability makes it easier to migrate from other LMS platforms.",
+            "Avoid rebuilds by importing existing SCORM packages."
+          ]
+        },
+        migration_timeline: {
+          id: "migration_timeline",
+          title: "Migration timing",
+          prompt: "Are you planning to migrate within the next 6-12 months?",
+          options: [
+            { id: "yes", label: "Yes", next: "yes_plan_to_continue" },
+            { id: "no", label: "No", next: "recommend_native_first" },
+            { id: "unsure", label: "Not sure yet", next: "yes_plan_to_continue" }
+          ],
+          info: [
+            "SCORM helps reduce vendor lock-in by keeping content portable.",
+            "Thinkific Plus adds distribution, automation, and monetization capabilities."
+          ]
+        },
+        yes_plan_to_continue: {
+          id: "yes_plan_to_continue",
+          title: "Future plans for SCORM",
+          prompt: "Do you plan to continue building in SCORM, or reduce costs and author natively in Thinkific?",
+          options: [
+            { id: "keep_scorm", label: "Keep using SCORM", next: "keep_scorm_reco" },
+            { id: "move_away", label: "Move away from SCORM over time", next: "move_away_reco" }
+          ],
+          info: [
+            "Meet them where they are: compliance or legacy needs may require SCORM short-term.",
+            "If they are cost- or agility-focused, highlight authoring in Thinkific."
+          ]
+        },
+        keep_scorm_reco: {
+          id: "keep_scorm_reco",
+          title: "Recommendation: Keep SCORM, with expectations set",
+          info: [
+            "Thinkific hosts your SCORM securely - no SCORM Cloud required.",
+            "Blend SCORM with native Thinkific lessons for complete learning paths.",
+            "Reporting focuses on completion, score, duration, and pass/fail."
+          ],
+          endRecommendation: {
+            headline: "Next step: Upload a sample SCORM file",
+            summary: "Use your own test site (not the demo). Confirm it renders as expected, then plan migration.",
+            tag: "Try Sample"
+          },
+          options: [
+            {
+              id: "help_link",
+              label: "Open SCORM Help Article ->",
+              href: "https://support.thinkific.com/hc/en-us/articles/24607412212119-Create-SCORM-Compliant-Courses"
+            },
+            { id: "restart", label: "Start Over", next: "start" }
+          ]
+        },
+        move_away_reco: {
+          id: "move_away_reco",
+          title: "Recommend exploring native authoring",
+          info: [
+            "Native Thinkific authoring provides detailed analytics and easier updates.",
+            "Migrate SCORM over time while supporting any compliance requirements short-term."
+          ],
+          endRecommendation: {
+            headline: "Next step: Prototype a native lesson",
+            summary: "Build a quick sample in Thinkific to test iteration speed, analytics, and learner experience.",
+            tag: "Prefer Native"
+          },
+          options: [
+            { id: "restart2", label: "Start Over", next: "start" }
+          ]
+        },
+        no_use_scorm_intro: {
+          id: "no_use_scorm_intro",
+          title: "No current SCORM",
+          prompt: "What is driving your interest in SCORM?",
+          options: [
+            { id: "interactive", label: "We need interactive or branching content", next: "interactive_reco" },
+            { id: "compliance", label: "Compliance or partner requirement", next: "compliance_reco" },
+            { id: "migration", label: "Legacy content migration", next: "migration_reco" },
+            { id: "exploring", label: "Just exploring options", next: "exploring_reco" }
+          ],
+          info: [
+            "Thinkific works well without SCORM. Add it when a clear driver exists.",
+            "SCORM is ideal when interactive content or LMS interoperability is required."
+          ]
+        },
+        interactive_reco: {
+          id: "interactive_reco",
+          title: "Interactive learning value",
+          info: [
+            "SCORM supports branching scenarios, simulations, and rich interactivity.",
+            "Authoring tools take time to master, so confirm internal capability."
+          ],
+          endRecommendation: {
+            headline: "Next step: Validate tools and build a pilot",
+            summary: "Confirm your authoring tool and upload one SCORM package to test the learner experience.",
+            tag: "Interactive"
+          },
+          options: [
+            {
+              id: "help_link4",
+              label: "Open SCORM Help Article ->",
+              href: "https://support.thinkific.com/hc/en-us/articles/24607412212119-Create-SCORM-Compliant-Courses"
+            },
+            { id: "restart6", label: "Start Over", next: "start" }
+          ]
+        },
+        compliance_reco: {
+          id: "compliance_reco",
+          title: "If compliance drives SCORM, we can support it",
+          info: [
+            "Use SCORM where mandated and author natively elsewhere for better analytics.",
+            "Thinkific Plus reporting supports completion, score, duration, and pass/fail."
+          ],
+          endRecommendation: {
+            headline: "Next step: Validate requirements",
+            summary: "Confirm which audiences truly require SCORM vs. those fine with native courses.",
+            tag: "SCORM Optional"
+          },
+          options: [{ id: "restart7", label: "Start Over", next: "start" }]
+        },
+        migration_reco: {
+          id: "migration_reco",
+          title: "Migrate existing SCORM content",
+          info: [
+            "SCORM makes content portable across LMS platforms.",
+            "Import SCORM into Thinkific without rebuilding modules."
+          ],
+          endRecommendation: {
+            headline: "Next step: Inventory your SCORM library",
+            summary: "List your existing SCORM packages and migrate the highest-impact content first.",
+            tag: "Migration"
+          },
+          options: [{ id: "restart9", label: "Start Over", next: "start" }]
+        },
+        exploring_reco: {
+          id: "exploring_reco",
+          title: "Exploring? Start with native Thinkific authoring",
+          info: [
+            "No extra software or licensing costs.",
+            "Build with video, quizzes, assignments, certificates, communities."
+          ],
+          endRecommendation: {
+            headline: "Next step: Draft a quick prototype",
+            summary: "Create a short native course to validate speed of iteration and reporting.",
+            tag: "Prefer Native"
+          },
+          options: [{ id: "restart8", label: "Start Over", next: "start" }]
+        },
+        recommend_native_first: {
+          id: "recommend_native_first",
+          title: "Recommendation: Start native, add SCORM if needed",
+          info: [
+            "SCORM is powerful but adds tooling and reporting constraints.",
+            "Native Thinkific lessons provide better analytics and mobile access."
+          ],
+          endRecommendation: {
+            headline: "Next step: Confirm learning goals",
+            summary: "Pilot native lessons first, then add SCORM if interactivity or compliance requires it.",
+            tag: "Start Native"
+          },
+          options: [{ id: "restart10", label: "Start Over", next: "start" }]
+        }
+      };
+
+      const state = {
+        currentId: "start",
+        breadcrumbs: [],
+        talkingPoints: new Set(),
+        talkingTimeline: [],
+        history: []
+      };
+
+      const elements = {
+        progressLabel: document.getElementById("stepLabel"),
+        breadcrumbs: document.getElementById("crumbs"),
+        title: document.getElementById("nodeTitle"),
+        prompt: document.getElementById("nodePrompt"),
+        infoList: document.getElementById("nodeInfo"),
+        options: document.getElementById("options"),
+        recommendation: document.getElementById("recommendation"),
+        recHeadline: document.getElementById("recHeadline"),
+        recSummary: document.getElementById("recSummary"),
+        recPoints: document.getElementById("recPoints"),
+        recTag: document.getElementById("recTag"),
+        talkingPanel: document.getElementById("talkingSection"),
+        talkingPoints: document.getElementById("talkingPoints"),
+        resetBtn: document.getElementById("resetBtn"),
+        backBtn: document.getElementById("backBtn")
+      };
+
+      function renderNode() {
+        const node = FLOW[state.currentId];
+        if (!node) {
+          return;
+        }
+
+        const hasFork = (node.options || []).some((opt) => opt.next && opt.next !== "start");
+        const isRecommendation = Boolean(node.endRecommendation);
+        elements.progressLabel.textContent = isRecommendation && !hasFork
+          ? "Recommendation"
+          : `Question ${Math.max(1, state.breadcrumbs.length + 1)}`;
+
+        elements.breadcrumbs.innerHTML = "";
+        state.breadcrumbs.forEach((label) => {
+          const chip = document.createElement("span");
+          chip.className = "chip";
+          chip.textContent = label;
+          elements.breadcrumbs.appendChild(chip);
+        });
+
+        elements.title.textContent = node.title || "";
+        elements.title.hidden = !node.title;
+        elements.prompt.textContent = node.prompt || "";
+        elements.prompt.hidden = !node.prompt;
+
+        elements.infoList.innerHTML = "";
+        if (node.info && node.info.length) {
+          node.info.forEach((item) => {
+            const li = document.createElement("li");
+            li.textContent = item;
+            elements.infoList.appendChild(li);
+          });
+          elements.infoList.hidden = false;
+        } else {
+          elements.infoList.hidden = true;
+        }
+
+        if (node.endRecommendation) {
+          elements.recommendation.hidden = false;
+          elements.recHeadline.textContent = node.endRecommendation.headline;
+          elements.recSummary.textContent = node.endRecommendation.summary;
+          elements.recTag.textContent = node.endRecommendation.tag;
+          elements.recPoints.innerHTML = "";
+          elements.recPoints.hidden = true;
+        } else {
+          elements.recommendation.hidden = true;
+        }
+
+        elements.backBtn.disabled = state.history.length === 0;
+
+        elements.options.innerHTML = "";
+        (node.options || []).forEach((option) => {
+          const button = document.createElement("button");
+          button.type = "button";
+          button.className = "option-btn";
+          const label = document.createElement("span");
+          label.textContent = option.label;
+          button.appendChild(label);
+          if (option.notes && option.notes.length) {
+            const note = document.createElement("span");
+            note.className = "option-note";
+            note.textContent = option.notes.join(" - ");
+            button.appendChild(note);
+          }
+          button.addEventListener("click", () => handleOptionSelection(node, option));
+          elements.options.appendChild(button);
+        });
+      }
+
+      function handleOptionSelection(node, option) {
+        if (option.href) {
+          window.open(option.href, "_blank", "noopener");
+          return;
+        }
+
+        if (option.next === "start") {
+          reset();
+          return;
+        }
+
+        state.history.push(snapshotState());
+        state.breadcrumbs.push(option.label);
+        addTalkingPoints(node.info, option.notes);
+
+        if (option.next) {
+          state.currentId = option.next;
+          renderNode();
+        }
+      }
+
+      function snapshotState() {
+        return {
+          currentId: state.currentId,
+          breadcrumbs: [...state.breadcrumbs],
+          talkingTimeline: [...state.talkingTimeline]
+        };
+      }
+
+      function restoreState(snapshot) {
+        state.currentId = snapshot.currentId;
+        state.breadcrumbs = [...snapshot.breadcrumbs];
+        state.talkingTimeline = [...snapshot.talkingTimeline];
+        state.talkingPoints = new Set(state.talkingTimeline);
+        renderTalkingPoints();
+        renderNode();
+      }
+
+      function goBack() {
+        const previous = state.history.pop();
+        if (!previous) {
+          return;
+        }
+        restoreState(previous);
+      }
+
+      function addTalkingPoints(nodeInfo = [], optionNotes = []) {
+        const additions = [...(nodeInfo || []), ...(optionNotes || [])];
+        additions.forEach((point) => {
+          if (!state.talkingPoints.has(point)) {
+            state.talkingPoints.add(point);
+            state.talkingTimeline.push(point);
+          }
+        });
+        renderTalkingPoints();
+      }
+
+      function renderTalkingPoints() {
+        elements.talkingPoints.innerHTML = "";
+        state.talkingTimeline.forEach((point) => {
+          const li = document.createElement("li");
+          li.textContent = point;
+          elements.talkingPoints.appendChild(li);
+        });
+        elements.talkingPanel.classList.toggle("visible", state.talkingTimeline.length > 0);
+      }
+
+      function reset() {
+        state.currentId = "start";
+        state.breadcrumbs = [];
+        state.talkingPoints.clear();
+        state.talkingTimeline = [];
+        state.history = [];
+        renderTalkingPoints();
+        renderNode();
+      }
+
+      document.addEventListener("keydown", (event) => {
+        if (event.key.toLowerCase() === "r") {
+          reset();
+          return;
+        }
+        if (state.currentId === "start") {
+          if (event.key.toLowerCase() === "y") {
+            const opt = FLOW.start.options.find((option) => option.id === "yes");
+            if (opt) {
+              handleOptionSelection(FLOW.start, opt);
+            }
+          } else if (event.key.toLowerCase() === "n") {
+            const opt = FLOW.start.options.find((option) => option.id === "no");
+            if (opt) {
+              handleOptionSelection(FLOW.start, opt);
+            }
+          }
+        }
+      });
+
+      elements.resetBtn.addEventListener("click", reset);
+      elements.backBtn.addEventListener("click", goBack);
+      renderNode();
+    </script>
+  </body>
+</html>

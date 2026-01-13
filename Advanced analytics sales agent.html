@@ -1,0 +1,677 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Thinkific Advanced Analytics Conversation Helper</title>
+    <meta name="description" content="Guided Advanced Analytics discovery flow for sales role play." />
+    <style>
+      :root {
+        --bg: #f3f0ea;
+        --card: #ffffff;
+        --ink: #1d1a16;
+        --muted: #6b665f;
+        --accent: #c86b3c;
+        --accent-dark: #a5532c;
+        --chip: #efe6db;
+        --shadow: 0 12px 40px rgba(27, 20, 10, 0.12);
+        --radius: 20px;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        font-family: "Space Grotesk", "Segoe UI", sans-serif;
+        color: var(--ink);
+        background: radial-gradient(circle at 20% 10%, #f6e9dc 0%, var(--bg) 45%, #efeae0 100%);
+        min-height: 100vh;
+      }
+
+      .page {
+        max-width: 1100px;
+        margin: 0 auto;
+        padding: 48px 20px 56px;
+      }
+
+      header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 24px;
+      }
+
+      .header-actions {
+        display: flex;
+        gap: 10px;
+      }
+
+      .brand {
+        font-size: 18px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--muted);
+      }
+
+      .restart {
+        background: none;
+        border: none;
+        color: var(--accent-dark);
+        font-weight: 600;
+        cursor: pointer;
+        padding: 8px 10px;
+        border-radius: 999px;
+        transition: background 0.2s ease;
+      }
+
+      .restart[disabled] {
+        cursor: not-allowed;
+        opacity: 0.45;
+      }
+
+      .restart:hover,
+      .restart:focus-visible {
+        background: #f7e1d3;
+        outline: none;
+      }
+
+      .layout {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 320px;
+        gap: 24px;
+      }
+
+      .card {
+        background: var(--card);
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
+        padding: 28px 28px 32px;
+        display: flex;
+        flex-direction: column;
+        gap: 18px;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .card::after {
+        content: "";
+        position: absolute;
+        inset: auto -40% -60% -40%;
+        height: 180px;
+        background: radial-gradient(circle at 50% 0%, rgba(200, 107, 60, 0.12), transparent 70%);
+      }
+
+      .progress {
+        font-size: 13px;
+        text-transform: uppercase;
+        letter-spacing: 0.12em;
+        color: var(--muted);
+      }
+
+      .chips {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+
+      .chip {
+        background: var(--chip);
+        padding: 6px 12px;
+        border-radius: 999px;
+        font-size: 13px;
+        color: var(--muted);
+      }
+
+      h1 {
+        font-size: 26px;
+        margin: 0;
+      }
+
+      .prompt {
+        font-size: 18px;
+        margin: 0;
+        line-height: 1.5;
+      }
+
+      .info {
+        margin: 0;
+        padding-left: 18px;
+        color: var(--muted);
+      }
+
+      .info li {
+        margin-bottom: 6px;
+      }
+
+      .options {
+        display: grid;
+        gap: 12px;
+      }
+
+      .option-btn {
+        text-align: left;
+        border: 1px solid #e4d8cc;
+        border-radius: 14px;
+        padding: 14px 16px;
+        background: #fffaf5;
+        cursor: pointer;
+        font-size: 16px;
+        font-weight: 600;
+        color: var(--ink);
+        transition: transform 0.15s ease, border 0.15s ease, box-shadow 0.15s ease;
+      }
+
+      .option-btn:hover,
+      .option-btn:focus-visible {
+        transform: translateY(-1px);
+        border-color: var(--accent);
+        box-shadow: 0 8px 18px rgba(200, 107, 60, 0.18);
+        outline: none;
+      }
+
+      .recommendation {
+        background: #fff1e7;
+        border-radius: 16px;
+        padding: 16px;
+        border: 1px solid #f1c5ae;
+      }
+
+      .recommendation h3 {
+        margin: 0 0 6px;
+        font-size: 18px;
+      }
+
+      .rec-points {
+        margin: 10px 0 0;
+        padding-left: 18px;
+        color: var(--muted);
+      }
+
+      .rec-points li {
+        margin-bottom: 6px;
+      }
+
+      .rec-heading {
+        list-style: none;
+        margin-left: -18px;
+        font-weight: 700;
+        color: var(--ink);
+        margin-top: 10px;
+      }
+
+      .rec-heading::marker {
+        content: "";
+      }
+
+      .tag {
+        display: inline-block;
+        margin-top: 8px;
+        padding: 4px 10px;
+        border-radius: 999px;
+        background: var(--accent);
+        color: white;
+        font-size: 12px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      .panel {
+        background: var(--card);
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
+        padding: 22px 20px;
+        display: none;
+        flex-direction: column;
+        gap: 14px;
+        height: fit-content;
+      }
+
+      .panel.visible {
+        display: flex;
+      }
+
+      .panel h2 {
+        font-size: 16px;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--muted);
+        margin: 0;
+      }
+
+      .talking-points {
+        margin: 0;
+        padding-left: 18px;
+      }
+
+      .talking-points li {
+        margin-bottom: 8px;
+      }
+
+      footer {
+        margin-top: 28px;
+        display: flex;
+        gap: 16px;
+        color: var(--muted);
+        font-size: 14px;
+      }
+
+      footer a {
+        color: var(--muted);
+        text-decoration: none;
+      }
+
+      footer a:hover {
+        color: var(--accent-dark);
+      }
+
+      @media (max-width: 900px) {
+        .layout {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="page">
+      <header>
+        <div class="brand">Thinkific Advanced Analytics Conversation Helper</div>
+        <div class="header-actions">
+          <button class="restart" type="button" id="backBtn">Back</button>
+          <button class="restart" type="button" id="restartBtn">Start over</button>
+        </div>
+      </header>
+
+      <main class="layout">
+        <section class="card" aria-live="polite" aria-atomic="true" id="mainCard">
+          <div class="progress" id="progressLabel">Question 1</div>
+          <div class="chips" id="breadcrumbs"></div>
+          <h1 id="title"></h1>
+          <p class="prompt" id="prompt"></p>
+          <ul class="info" id="infoList"></ul>
+          <div class="recommendation" id="recommendation" hidden>
+            <h3 id="recHeadline"></h3>
+            <p id="recSummary"></p>
+            <ul class="rec-points" id="recPoints"></ul>
+            <div class="tag" id="recTag"></div>
+          </div>
+          <div class="options" id="options"></div>
+        </section>
+
+        <aside class="panel" id="talkingPanel">
+          <h2>Talking points saved</h2>
+          <ul class="talking-points" id="talkingPoints"></ul>
+        </aside>
+      </main>
+
+      <footer>
+        <span>Thinkific Analytics + Advanced Analytics (Plus)</span>
+      </footer>
+    </div>
+
+    <script>
+      const FLOW = {
+        start: {
+          id: "start",
+          title: "Analytics discovery",
+          prompt: "How important is data and reporting to your team today?",
+          info: [
+            "Goal: understand data maturity, stakeholders, and reporting pain.",
+            "Advanced Analytics enables custom dashboards, scheduled delivery, and role-based access.",
+            "Surface whether a Solutions Engineer should validate the use case."
+          ],
+          options: [
+            { id: "critical", label: "Critical - we run the business on data", next: "data_location" },
+            { id: "important", label: "Important, but not consistent", next: "data_location" },
+            { id: "basic", label: "Nice to have, basic reports are enough", next: "basic_reporting" }
+          ]
+        },
+        data_location: {
+          id: "data_location",
+          title: "Where does data live today?",
+          prompt: "Where do you pull reporting from right now?",
+          info: [
+            "Look for fragmentation or manual work: spreadsheets, exports, or multiple tools.",
+            "Advanced Analytics can automate delivery to email, webhook, S3, or SFTP."
+          ],
+          options: [
+            { id: "native", label: "Mostly inside Thinkific", next: "stakeholders" },
+            { id: "spreadsheets", label: "CSV exports and spreadsheets", next: "data_team" },
+            { id: "bi", label: "BI tools or data warehouse", next: "pipelines" },
+            { id: "mixed", label: "A mix of tools and manual steps", next: "data_team" }
+          ]
+        },
+        data_team: {
+          id: "data_team",
+          title: "Data ownership",
+          prompt: "Do you have a data or analytics team?",
+          info: [
+            "If no data team, emphasize simple dashboards and automation.",
+            "If they do, explore pipelines and advanced delivery options."
+          ],
+          options: [
+            { id: "yes", label: "Yes, we have a data team", next: "pipelines" },
+            { id: "no", label: "No, reporting is handled by the team", next: "stakeholders" },
+            { id: "lean", label: "Small or part-time support", next: "stakeholders" }
+          ]
+        },
+        pipelines: {
+          id: "pipelines",
+          title: "Data pipelines",
+          prompt: "Do you need recurring exports into a data lake or BI tool?",
+          info: [
+            "Advanced Analytics supports scheduled delivery and custom dashboards.",
+            "Common for B2B reporting, internal dashboards, or compliance visibility."
+          ],
+          options: [
+            { id: "yes", label: "Yes - recurring exports are required", next: "se_request" },
+            { id: "maybe", label: "Maybe - we are exploring", next: "stakeholders" },
+            { id: "no", label: "No - we just need better visibility", next: "stakeholders" }
+          ]
+        },
+        stakeholders: {
+          id: "stakeholders",
+          title: "Who needs the insights?",
+          prompt: "Which teams need visibility into performance?",
+          info: [
+            "Different stakeholders need different dashboards.",
+            "Advanced Analytics allows role-based access and custom views."
+          ],
+          options: [
+            { id: "rev", label: "Revenue or growth teams", next: "growth_focus" },
+            { id: "custed", label: "Customer education or enablement", next: "learning_focus" },
+            { id: "exec", label: "Executives or leadership", next: "exec_focus" },
+            { id: "b2b", label: "B2B clients or partners", next: "b2b_focus" }
+          ]
+        },
+        growth_focus: {
+          id: "growth_focus",
+          title: "Revenue and growth",
+          prompt: "What metrics matter most?",
+          info: [
+            "Thinkific Analytics connects revenue, orders, and funnel conversion.",
+            "Advanced Analytics makes it easy to share tailored views."
+          ],
+          options: [
+            { id: "funnel", label: "Funnel conversion and drop-off", next: "recommend_aa" },
+            { id: "revenue", label: "Revenue trends and top products", next: "recommend_aa" },
+            { id: "offers", label: "Pricing, coupons, and offers", next: "recommend_aa" }
+          ]
+        },
+        learning_focus: {
+          id: "learning_focus",
+          title: "Learning outcomes",
+          prompt: "What does success look like for your program?",
+          info: [
+            "Use engagement and completion metrics to improve outcomes.",
+            "Advanced Analytics can automate reporting to stakeholders."
+          ],
+          options: [
+            { id: "completion", label: "Completion and progress", next: "recommend_aa" },
+            { id: "engagement", label: "Engagement and drop-off", next: "recommend_aa" },
+            { id: "impact", label: "Proving ROI or retention impact", next: "recommend_aa" }
+          ]
+        },
+        exec_focus: {
+          id: "exec_focus",
+          title: "Leadership visibility",
+          prompt: "How often do leaders need reporting?",
+          info: [
+            "Advanced Analytics can schedule recurring delivery.",
+            "Executives often need a single, clean dashboard."
+          ],
+          options: [
+            { id: "weekly", label: "Weekly or monthly dashboards", next: "recommend_aa" },
+            { id: "ad_hoc", label: "Ad hoc requests", next: "recommend_aa" },
+            { id: "quarterly", label: "Quarterly business reviews", next: "recommend_aa" }
+          ]
+        },
+        b2b_focus: {
+          id: "b2b_focus",
+          title: "B2B reporting",
+          prompt: "Do you need to share reports with clients?",
+          info: [
+            "Advanced Analytics supports recurring, tailored reports for partners.",
+            "This is a common use case for Plus customers."
+          ],
+          options: [
+            { id: "yes", label: "Yes, we send client reports", next: "recommend_aa" },
+            { id: "maybe", label: "Maybe in the future", next: "recommend_aa" },
+            { id: "no", label: "No, internal only", next: "recommend_aa" }
+          ]
+        },
+        basic_reporting: {
+          id: "basic_reporting",
+          title: "Baseline analytics",
+          prompt: "Do you need more than standard dashboards today?",
+          info: [
+            "Thinkific Analytics provides unified dashboards for core reporting.",
+            "Advanced Analytics is best when reporting must scale or be automated."
+          ],
+          options: [
+            { id: "yes", label: "Yes, we need more advanced reporting", next: "stakeholders" },
+            { id: "no", label: "No, standard reporting is fine", next: "recommend_basic" }
+          ]
+        },
+        recommend_aa: {
+          id: "recommend_aa",
+          title: "Recommendation: Explore Advanced Analytics",
+          info: [
+            "Advanced Analytics delivers custom dashboards, scheduling, and role-based views.",
+            "Best for teams with multiple stakeholders or recurring reporting needs."
+          ],
+          endRecommendation: {
+            headline: "Recommendation: Explore Advanced Analytics",
+            summary: "Confirm reporting goals, stakeholders, and delivery needs, then scope Advanced Analytics on Plus or as an add-on.",
+            tag: "Advanced Analytics"
+          },
+          options: [
+            { id: "se_request", label: "Submit a Solutions Engineer request", next: "se_request" },
+            { id: "restart", label: "Start Over", next: "start" }
+          ]
+        },
+        recommend_basic: {
+          id: "recommend_basic",
+          title: "Recommendation: Start with Thinkific Analytics",
+          info: [
+            "Thinkific Analytics provides unified reporting across marketing, revenue, enrollments, and engagement.",
+            "Advanced Analytics can be added later as reporting needs grow."
+          ],
+          endRecommendation: {
+            headline: "Recommendation: Start with Thinkific Analytics",
+            summary: "Use standard dashboards now and revisit Advanced Analytics when reporting needs scale.",
+            tag: "Start Simple"
+          },
+          options: [{ id: "restart2", label: "Start Over", next: "start" }]
+        },
+        se_request: {
+          id: "se_request",
+          title: "Request Solutions Engineering support",
+          info: [
+            "If the use case includes data pipelines, SFTP, or custom dashboards, involve a Solutions Engineer.",
+            "Capture stakeholders, reporting frequency, and destination (email, webhook, S3, SFTP)."
+          ],
+          endRecommendation: {
+            headline: "Recommendation: Submit an SE request",
+            summary: "Confirm the reporting workflow and have SE validate the approach for Advanced Analytics delivery.",
+            tag: "SE Review"
+          },
+          options: [{ id: "restart3", label: "Start Over", next: "start" }]
+        }
+      };
+
+      const state = {
+        currentId: "start",
+        breadcrumbs: [],
+        talkingPoints: new Set(),
+        talkingTimeline: [],
+        history: []
+      };
+
+      const elements = {
+        progressLabel: document.getElementById("progressLabel"),
+        breadcrumbs: document.getElementById("breadcrumbs"),
+        title: document.getElementById("title"),
+        prompt: document.getElementById("prompt"),
+        infoList: document.getElementById("infoList"),
+        options: document.getElementById("options"),
+        recommendation: document.getElementById("recommendation"),
+        recHeadline: document.getElementById("recHeadline"),
+        recSummary: document.getElementById("recSummary"),
+        recPoints: document.getElementById("recPoints"),
+        recTag: document.getElementById("recTag"),
+        talkingPanel: document.getElementById("talkingPanel"),
+        talkingPoints: document.getElementById("talkingPoints"),
+        restartBtn: document.getElementById("restartBtn"),
+        backBtn: document.getElementById("backBtn")
+      };
+
+      function renderNode() {
+        const node = FLOW[state.currentId];
+        if (!node) {
+          return;
+        }
+
+        elements.title.textContent = node.title || "";
+        elements.prompt.textContent = node.prompt || "";
+
+        elements.progressLabel.textContent = node.endRecommendation
+          ? "Recommendation"
+          : `Question ${Math.max(1, state.breadcrumbs.length + 1)}`;
+
+        elements.breadcrumbs.innerHTML = "";
+        state.breadcrumbs.forEach((label) => {
+          const chip = document.createElement("span");
+          chip.className = "chip";
+          chip.textContent = label;
+          elements.breadcrumbs.appendChild(chip);
+        });
+
+        elements.infoList.innerHTML = "";
+        if (node.info && node.info.length) {
+          node.info.forEach((item) => {
+            const li = document.createElement("li");
+            li.textContent = item;
+            elements.infoList.appendChild(li);
+          });
+          elements.infoList.hidden = false;
+        } else {
+          elements.infoList.hidden = true;
+        }
+
+        if (node.endRecommendation) {
+          elements.recommendation.hidden = false;
+          elements.recHeadline.textContent = node.endRecommendation.headline;
+          elements.recSummary.textContent = node.endRecommendation.summary;
+          elements.recTag.textContent = node.endRecommendation.tag;
+          elements.recPoints.innerHTML = "";
+          elements.recPoints.hidden = true;
+        } else {
+          elements.recommendation.hidden = true;
+        }
+
+        elements.backBtn.disabled = state.history.length === 0;
+
+        elements.options.innerHTML = "";
+        (node.options || []).forEach((option) => {
+          const button = document.createElement("button");
+          button.type = "button";
+          button.className = "option-btn";
+          button.textContent = option.label;
+          button.addEventListener("click", () => handleOptionSelection(node, option));
+          elements.options.appendChild(button);
+        });
+      }
+
+      function handleOptionSelection(node, option) {
+        if (option.href) {
+          window.open(option.href, "_blank", "noopener");
+          return;
+        }
+
+        if (option.next === "start") {
+          reset();
+          return;
+        }
+
+        state.history.push(snapshotState());
+        state.breadcrumbs.push(option.label);
+        addTalkingPoints(node.info, option.notes);
+
+        if (option.next) {
+          state.currentId = option.next;
+          renderNode();
+        }
+      }
+
+      function snapshotState() {
+        return {
+          currentId: state.currentId,
+          breadcrumbs: [...state.breadcrumbs],
+          talkingPoints: new Set(state.talkingPoints),
+          talkingTimeline: [...state.talkingTimeline]
+        };
+      }
+
+      function restoreState(snapshot) {
+        state.currentId = snapshot.currentId;
+        state.breadcrumbs = [...snapshot.breadcrumbs];
+        state.talkingPoints = new Set(snapshot.talkingPoints);
+        state.talkingTimeline = [...snapshot.talkingTimeline];
+        renderTalkingPoints();
+        renderNode();
+      }
+
+      function goBack() {
+        const previous = state.history.pop();
+        if (!previous) {
+          return;
+        }
+        restoreState(previous);
+      }
+
+      function addTalkingPoints(nodeInfo = [], optionNotes = []) {
+        const additions = [...(nodeInfo || []), ...(optionNotes || [])];
+        additions.forEach((point) => {
+          if (!state.talkingPoints.has(point)) {
+            state.talkingPoints.add(point);
+            state.talkingTimeline.push(point);
+          }
+        });
+        renderTalkingPoints();
+      }
+
+      function renderTalkingPoints() {
+        elements.talkingPoints.innerHTML = "";
+        state.talkingTimeline.forEach((point) => {
+          const li = document.createElement("li");
+          li.textContent = point;
+          elements.talkingPoints.appendChild(li);
+        });
+        elements.talkingPanel.classList.toggle("visible", state.talkingTimeline.length > 0);
+      }
+
+      function reset() {
+        state.currentId = "start";
+        state.breadcrumbs = [];
+        state.talkingPoints.clear();
+        state.talkingTimeline = [];
+        state.history = [];
+        renderTalkingPoints();
+        renderNode();
+      }
+
+      document.addEventListener("keydown", (event) => {
+        if (event.key.toLowerCase() === "r") {
+          reset();
+        }
+      });
+
+      elements.restartBtn.addEventListener("click", reset);
+      elements.backBtn.addEventListener("click", goBack);
+
+      renderNode();
+    </script>
+  </body>
+</html>

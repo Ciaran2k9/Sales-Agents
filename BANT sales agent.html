@@ -1,0 +1,648 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Thinkific BANT Conversation Helper</title>
+    <meta name="description" content="Basic BANT qualification flow for Thinkific sales discovery." />
+    <style>
+      :root {
+        --bg: #f3f0ea;
+        --card: #ffffff;
+        --ink: #1d1a16;
+        --muted: #6b665f;
+        --accent: #c86b3c;
+        --accent-dark: #a5532c;
+        --chip: #efe6db;
+        --shadow: 0 12px 40px rgba(27, 20, 10, 0.12);
+        --radius: 20px;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        font-family: "Space Grotesk", "Segoe UI", sans-serif;
+        color: var(--ink);
+        background: radial-gradient(circle at 20% 10%, #f6e9dc 0%, var(--bg) 45%, #efeae0 100%);
+        min-height: 100vh;
+      }
+
+      .page {
+        max-width: 1100px;
+        margin: 0 auto;
+        padding: 48px 20px 56px;
+      }
+
+      header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 24px;
+      }
+
+      .header-actions {
+        display: flex;
+        gap: 10px;
+      }
+
+      .brand {
+        font-size: 18px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--muted);
+      }
+
+      .restart {
+        background: none;
+        border: none;
+        color: var(--accent-dark);
+        font-weight: 600;
+        cursor: pointer;
+        padding: 8px 10px;
+        border-radius: 999px;
+        transition: background 0.2s ease;
+      }
+
+      .restart[disabled] {
+        cursor: not-allowed;
+        opacity: 0.45;
+      }
+
+      .restart:hover,
+      .restart:focus-visible {
+        background: #f7e1d3;
+        outline: none;
+      }
+
+      .layout {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 320px;
+        gap: 24px;
+      }
+
+      .card {
+        background: var(--card);
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
+        padding: 28px 28px 32px;
+        display: flex;
+        flex-direction: column;
+        gap: 18px;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .card::after {
+        content: "";
+        position: absolute;
+        inset: auto -40% -60% -40%;
+        height: 180px;
+        background: radial-gradient(circle at 50% 0%, rgba(200, 107, 60, 0.12), transparent 70%);
+      }
+
+      .progress {
+        font-size: 13px;
+        text-transform: uppercase;
+        letter-spacing: 0.12em;
+        color: var(--muted);
+      }
+
+      .chips {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+
+      .chip {
+        background: var(--chip);
+        padding: 6px 12px;
+        border-radius: 999px;
+        font-size: 13px;
+        color: var(--muted);
+      }
+
+      h1 {
+        font-size: 26px;
+        margin: 0;
+      }
+
+      .prompt {
+        font-size: 18px;
+        margin: 0;
+        line-height: 1.5;
+      }
+
+      .info {
+        margin: 0;
+        padding-left: 18px;
+        color: var(--muted);
+      }
+
+      .info li {
+        margin-bottom: 6px;
+      }
+
+      .options {
+        display: grid;
+        gap: 12px;
+      }
+
+      .option-btn {
+        text-align: left;
+        border: 1px solid #e4d8cc;
+        border-radius: 14px;
+        padding: 14px 16px;
+        background: #fffaf5;
+        cursor: pointer;
+        font-size: 16px;
+        font-weight: 600;
+        color: var(--ink);
+        transition: transform 0.15s ease, border 0.15s ease, box-shadow 0.15s ease;
+      }
+
+      .option-btn:hover,
+      .option-btn:focus-visible {
+        transform: translateY(-1px);
+        border-color: var(--accent);
+        box-shadow: 0 8px 18px rgba(200, 107, 60, 0.18);
+        outline: none;
+      }
+
+      .recommendation {
+        background: #fff1e7;
+        border-radius: 16px;
+        padding: 16px;
+        border: 1px solid #f1c5ae;
+      }
+
+      .recommendation h3 {
+        margin: 0 0 6px;
+        font-size: 18px;
+      }
+
+      .rec-points {
+        margin: 10px 0 0;
+        padding-left: 18px;
+        color: var(--muted);
+      }
+
+      .rec-points li {
+        margin-bottom: 6px;
+      }
+
+      .tag {
+        display: inline-block;
+        margin-top: 8px;
+        padding: 4px 10px;
+        border-radius: 999px;
+        background: var(--accent);
+        color: white;
+        font-size: 12px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      .panel {
+        background: var(--card);
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
+        padding: 22px 20px;
+        display: none;
+        flex-direction: column;
+        gap: 14px;
+        height: fit-content;
+      }
+
+      .panel.visible {
+        display: flex;
+      }
+
+      .panel h2 {
+        font-size: 16px;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--muted);
+        margin: 0;
+      }
+
+      .talking-points {
+        margin: 0;
+        padding-left: 18px;
+      }
+
+      .talking-points li {
+        margin-bottom: 8px;
+      }
+
+      footer {
+        margin-top: 28px;
+        display: flex;
+        gap: 16px;
+        color: var(--muted);
+        font-size: 14px;
+      }
+
+      footer a {
+        color: var(--muted);
+        text-decoration: none;
+      }
+
+      footer a:hover {
+        color: var(--accent-dark);
+      }
+
+      @media (max-width: 900px) {
+        .layout {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="page">
+      <header>
+        <div class="brand">Thinkific BANT Qualification Helper</div>
+        <div class="header-actions">
+          <button class="restart" type="button" id="backBtn">Back</button>
+          <button class="restart" type="button" id="restartBtn">Start over</button>
+        </div>
+      </header>
+
+      <main class="layout">
+        <section class="card" aria-live="polite" aria-atomic="true" id="mainCard">
+          <div class="progress" id="progressLabel">Question 1</div>
+          <div class="chips" id="breadcrumbs"></div>
+          <h1 id="title"></h1>
+          <p class="prompt" id="prompt"></p>
+          <ul class="info" id="infoList"></ul>
+          <div class="recommendation" id="recommendation" hidden>
+            <h3 id="recHeadline"></h3>
+            <p id="recSummary"></p>
+            <ul class="rec-points" id="recPoints"></ul>
+            <div class="tag" id="recTag"></div>
+          </div>
+          <div class="options" id="options"></div>
+        </section>
+
+        <aside class="panel" id="talkingPanel">
+          <h2>Talking points saved</h2>
+          <ul class="talking-points" id="talkingPoints"></ul>
+        </aside>
+      </main>
+
+      <footer>
+        <span>Best fit: revenue-generating course businesses and scaled education programs.</span>
+      </footer>
+    </div>
+
+    <script>
+      const FLOW = {
+        start: {
+          id: "start",
+          title: "BANT discovery",
+          prompt: "Are you delivering online learning today?",
+          info: [
+            "Goal: qualify fit and readiness for Thinkific Plus.",
+            "Keep it simple: audience, content strategy, budget, authority, and timeline.",
+            "If urgency and budget are clear, move to demo with SE." 
+          ],
+          options: [
+            { id: "yes", label: "Yes, we already deliver online learning", next: "audience" },
+            { id: "planning", label: "Not yet, we are planning", next: "audience" },
+            { id: "no", label: "No, and no plans yet", next: "no_need" }
+          ]
+        },
+        audience: {
+          id: "audience",
+          title: "Audience and fit",
+          prompt: "Do you have an audience and a clear use case?",
+          info: [
+            "Best fit: consumer-driven course businesses and scaled education programs.",
+            "Secondary fit: internal training or customer education with clear outcomes."
+          ],
+          options: [
+            { id: "consumer", label: "Yes, selling courses to the public", next: "content_strategy" },
+            { id: "internal", label: "Internal training", next: "content_strategy" },
+            { id: "customer", label: "Customer education", next: "content_strategy" },
+            { id: "no_audience", label: "No audience yet", next: "nurture" }
+          ]
+        },
+        content_strategy: {
+          id: "content_strategy",
+          title: "Content strategy",
+          prompt: "What does your content strategy look like?",
+          info: [
+            "Clarify content readiness, ILT mix, and online delivery model.",
+            "Large ILT share can be a weaker fit for Thinkific Plus."
+          ],
+          options: [
+            { id: "digital", label: "Primarily on-demand digital courses", next: "pricing" },
+            { id: "mixed", label: "Blend of digital and live", next: "pricing" },
+            { id: "ilt", label: "50%+ ILT or services-heavy", next: "maybe_fit" }
+          ]
+        },
+        pricing: {
+          id: "pricing",
+          title: "Monetization",
+          prompt: "What are your current price points or revenue model?",
+          info: [
+            "Look for revenue-generating intent: paid courses, subscriptions, or B2B contracts.",
+            "If no pricing yet, treat as early-stage and nurture."
+          ],
+          options: [
+            { id: "paid", label: "Paid courses or subscriptions", next: "budget" },
+            { id: "b2b", label: "B2B contracts or bulk licenses", next: "budget" },
+            { id: "free", label: "Free or unclear pricing", next: "nurture" }
+          ]
+        },
+        budget: {
+          id: "budget",
+          title: "Budget",
+          prompt: "Is budget already allocated for a learning platform?",
+          info: [
+            "Budget signal + timeline = faster path to demo.",
+            "If budget is unknown, move to authority and timeline."
+          ],
+          options: [
+            { id: "yes", label: "Yes, budget is allocated", next: "authority" },
+            { id: "maybe", label: "Not sure yet", next: "authority" },
+            { id: "no", label: "No budget identified", next: "nurture" }
+          ]
+        },
+        authority: {
+          id: "authority",
+          title: "Authority",
+          prompt: "Who makes the final decision?",
+          info: [
+            "Map stakeholders: buyer, champion, technical evaluator.",
+            "If decision maker is not on the call, set a path to include them."
+          ],
+          options: [
+            { id: "dm", label: "I am the decision maker", next: "timeline" },
+            { id: "committee", label: "Committee decision", next: "timeline" },
+            { id: "influencer", label: "I am gathering information", next: "timeline" }
+          ]
+        },
+        timeline: {
+          id: "timeline",
+          title: "Timeline",
+          prompt: "When do you need to launch?",
+          info: [
+            "Fast timelines or large logos can warrant SE-led demos early.",
+            "Use launch timing to guide next steps."
+          ],
+          options: [
+            { id: "fast", label: "In 1-3 months", next: "fast_track" },
+            { id: "mid", label: "In 3-6 months", next: "recommend_demo" },
+            { id: "late", label: "6+ months", next: "nurture" }
+          ]
+        },
+        fast_track: {
+          id: "fast_track",
+          title: "Fast-track opportunity",
+          info: [
+            "Urgency plus budget suggests a high-intent opportunity.",
+            "Involve an SE if there are technical requirements or enterprise needs."
+          ],
+          endRecommendation: {
+            headline: "Recommendation: Fast-track demo with SE",
+            summary: "Schedule a demo quickly and loop in an SE to validate technical needs and launch readiness.",
+            tag: "SE Demo"
+          },
+          options: [{ id: "restart1", label: "Start Over", next: "start" }]
+        },
+        recommend_demo: {
+          id: "recommend_demo",
+          title: "Qualified for demo",
+          info: [
+            "Fit is solid with defined use case, audience, and budget intent.",
+            "Use discovery notes to guide a tailored demo."
+          ],
+          endRecommendation: {
+            headline: "Recommendation: Proceed to demo",
+            summary: "Share a tailored demo and document launch requirements in the mutual action plan.",
+            tag: "Demo"
+          },
+          options: [{ id: "restart2", label: "Start Over", next: "start" }]
+        },
+        nurture: {
+          id: "nurture",
+          title: "Nurture",
+          info: [
+            "Early-stage or unclear readiness.",
+            "Focus on use case clarity, audience validation, and timeline."
+          ],
+          endRecommendation: {
+            headline: "Recommendation: Nurture",
+            summary: "Send enablement resources, clarify audience and content strategy, and revisit when timing improves.",
+            tag: "Nurture"
+          },
+          options: [{ id: "restart3", label: "Start Over", next: "start" }]
+        },
+        no_need: {
+          id: "no_need",
+          title: "No current need",
+          info: [
+            "No current online learning initiative or audience.",
+            "Not a fit until a clear program exists."
+          ],
+          endRecommendation: {
+            headline: "Recommendation: No active need",
+            summary: "Close the loop and re-engage if a learning program is launched in the future.",
+            tag: "No Need"
+          },
+          options: [{ id: "restart4", label: "Start Over", next: "start" }]
+        },
+        maybe_fit: {
+          id: "maybe_fit",
+          title: "Potential fit, needs validation",
+          info: [
+            "High ILT or heavy services can require workarounds.",
+            "Check for online revenue goals or a move toward digital delivery."
+          ],
+          endRecommendation: {
+            headline: "Recommendation: Validate fit",
+            summary: "Explore digital content goals and confirm if Thinkific aligns with delivery model.",
+            tag: "Validate"
+          },
+          options: [{ id: "restart5", label: "Start Over", next: "start" }]
+        }
+      };
+
+      const state = {
+        currentId: "start",
+        breadcrumbs: [],
+        talkingPoints: new Set(),
+        talkingTimeline: [],
+        history: []
+      };
+
+      const elements = {
+        progressLabel: document.getElementById("progressLabel"),
+        breadcrumbs: document.getElementById("breadcrumbs"),
+        title: document.getElementById("title"),
+        prompt: document.getElementById("prompt"),
+        infoList: document.getElementById("infoList"),
+        options: document.getElementById("options"),
+        recommendation: document.getElementById("recommendation"),
+        recHeadline: document.getElementById("recHeadline"),
+        recSummary: document.getElementById("recSummary"),
+        recPoints: document.getElementById("recPoints"),
+        recTag: document.getElementById("recTag"),
+        talkingPanel: document.getElementById("talkingPanel"),
+        talkingPoints: document.getElementById("talkingPoints"),
+        restartBtn: document.getElementById("restartBtn"),
+        backBtn: document.getElementById("backBtn")
+      };
+
+      function renderNode() {
+        const node = FLOW[state.currentId];
+        if (!node) {
+          return;
+        }
+
+        elements.title.textContent = node.title || "";
+        elements.prompt.textContent = node.prompt || "";
+
+        elements.progressLabel.textContent = node.endRecommendation
+          ? "Recommendation"
+          : `Question ${Math.max(1, state.breadcrumbs.length + 1)}`;
+
+        elements.breadcrumbs.innerHTML = "";
+        state.breadcrumbs.forEach((label) => {
+          const chip = document.createElement("span");
+          chip.className = "chip";
+          chip.textContent = label;
+          elements.breadcrumbs.appendChild(chip);
+        });
+
+        elements.infoList.innerHTML = "";
+        if (node.info && node.info.length) {
+          node.info.forEach((item) => {
+            const li = document.createElement("li");
+            li.textContent = item;
+            elements.infoList.appendChild(li);
+          });
+          elements.infoList.hidden = false;
+        } else {
+          elements.infoList.hidden = true;
+        }
+
+        if (node.endRecommendation) {
+          elements.recommendation.hidden = false;
+          elements.recHeadline.textContent = node.endRecommendation.headline;
+          elements.recSummary.textContent = node.endRecommendation.summary;
+          elements.recTag.textContent = node.endRecommendation.tag;
+          elements.recPoints.innerHTML = "";
+          elements.recPoints.hidden = true;
+        } else {
+          elements.recommendation.hidden = true;
+        }
+
+        elements.backBtn.disabled = state.history.length === 0;
+
+        elements.options.innerHTML = "";
+        (node.options || []).forEach((option) => {
+          const button = document.createElement("button");
+          button.type = "button";
+          button.className = "option-btn";
+          button.textContent = option.label;
+          button.addEventListener("click", () => handleOptionSelection(node, option));
+          elements.options.appendChild(button);
+        });
+      }
+
+      function handleOptionSelection(node, option) {
+        if (option.href) {
+          window.open(option.href, "_blank", "noopener");
+          return;
+        }
+
+        if (option.next === "start") {
+          reset();
+          return;
+        }
+
+        state.history.push(snapshotState());
+        state.breadcrumbs.push(option.label);
+        addTalkingPoints(node.info, option.notes);
+
+        if (option.next) {
+          state.currentId = option.next;
+          renderNode();
+        }
+      }
+
+      function snapshotState() {
+        return {
+          currentId: state.currentId,
+          breadcrumbs: [...state.breadcrumbs],
+          talkingPoints: new Set(state.talkingPoints),
+          talkingTimeline: [...state.talkingTimeline]
+        };
+      }
+
+      function restoreState(snapshot) {
+        state.currentId = snapshot.currentId;
+        state.breadcrumbs = [...snapshot.breadcrumbs];
+        state.talkingPoints = new Set(snapshot.talkingPoints);
+        state.talkingTimeline = [...snapshot.talkingTimeline];
+        renderTalkingPoints();
+        renderNode();
+      }
+
+      function goBack() {
+        const previous = state.history.pop();
+        if (!previous) {
+          return;
+        }
+        restoreState(previous);
+      }
+
+      function addTalkingPoints(nodeInfo = [], optionNotes = []) {
+        const additions = [...(nodeInfo || []), ...(optionNotes || [])];
+        additions.forEach((point) => {
+          if (!state.talkingPoints.has(point)) {
+            state.talkingPoints.add(point);
+            state.talkingTimeline.push(point);
+          }
+        });
+        renderTalkingPoints();
+      }
+
+      function renderTalkingPoints() {
+        elements.talkingPoints.innerHTML = "";
+        state.talkingTimeline.forEach((point) => {
+          const li = document.createElement("li");
+          li.textContent = point;
+          elements.talkingPoints.appendChild(li);
+        });
+        elements.talkingPanel.classList.toggle("visible", state.talkingTimeline.length > 0);
+      }
+
+      function reset() {
+        state.currentId = "start";
+        state.breadcrumbs = [];
+        state.talkingPoints.clear();
+        state.talkingTimeline = [];
+        state.history = [];
+        renderTalkingPoints();
+        renderNode();
+      }
+
+      document.addEventListener("keydown", (event) => {
+        if (event.key.toLowerCase() === "r") {
+          reset();
+        }
+      });
+
+      elements.restartBtn.addEventListener("click", reset);
+      elements.backBtn.addEventListener("click", goBack);
+
+      renderNode();
+    </script>
+  </body>
+</html>
